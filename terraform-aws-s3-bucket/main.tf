@@ -1,4 +1,4 @@
-# Module for creating s3 buckets
+# Module to creating s3 buckets
 module "bucket-creation" {
   source = "./modules/s3creation"
   count  = length(var.bucket)
