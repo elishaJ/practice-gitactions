@@ -5,6 +5,29 @@ on:
       - main # Replace with your branch name
 
 jobs:
+  build:
+    runs-on: ubuntu-latest  # windows-latest | macos-latest
+    name: Test changed-files
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # OR "2" -> To retrieve the preceding commit.
+
+      # Example 1
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v36
+        
+        # To compare changes between the current commit and the last pushed remote commit set `since_last_remote_commit: true`. e.g
+        # with:
+        #   since_last_remote_commit: true 
+
+      - name: List all changed files
+        run: |
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "$file was changed"
+          done
+
   terraform-apply:
     runs-on: ubuntu-latest
 
@@ -12,22 +35,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       
-      - name: Get branch name
-        id: branch-name
-        uses: tj-actions/branch-names@v6
-
-      - uses: nrwl/nx-set-shas@v3
-        id: last_successful_commit_push
-        with:
-          main-branch-name: ${{ steps.branch-name.outputs.current_branch }} # Get the last successful commit for the current branch.
-          workflow-id: 'test.yml'
-
-      - name: Run changed-files with the commit of the last successful test workflow run
-        id: changed-files-base-sha-push
-        uses: tj-actions/changed-files@v36
-        with:
-          base_sha: ${{ steps.last_successful_commit_push.outputs.base }}
-
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v1
         with:
