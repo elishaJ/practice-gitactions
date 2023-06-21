@@ -3,29 +3,29 @@ on:
     branches:
       - main
 jobs:
-  find-jobs:
-    name: Find Jobs
+  detect-directory-changes:
+    name: "Detect Directory Changes"
     runs-on: ubuntu-latest
     outputs:
-      folders: ${{ steps.jobs.outputs.folders }}
+      changed: ${{ steps.detect.outputs.changed }}
     steps:
-      - uses: actions/checkout@v1
+      - name: Checkout
+        uses: actions/checkout@v2
 
-      - id: jobs
-        uses: philips-labs/list-folders-action@v1
-        with:
-          path: .
+      - name: Detect Directory Changes
+        id: detect
+        uses: tchupp/actions-detect-directory-changes@v1
 
-  matrix:
-      name: Matrix Jobs
-      runs-on: ubuntu-latest
-      needs: [find-jobs]
-      defaults:
-        run:
-          working-directory: ${{ matrix.folder }}
-      strategy:
-        matrix:
-          folder: ${{ fromJson(needs.find-jobs.outputs.folders )}}
-      steps:
-          - name: do something
-            run: echo ${{ matrix.folder }}
+  build:
+    name: "Build sub-projects"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: ${{ fromJSON(needs.detect-directory-changes.outputs.changed) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build ${{ matrix.project }}
+        working-directory: ./${{ matrix.project }}
+        run: echo ${{ matrix.folder }}
