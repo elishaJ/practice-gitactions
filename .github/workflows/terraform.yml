@@ -1,0 +1,26 @@
+name: Run Command in All Folders
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  run-command:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Get Directory Listing
+        id: dir-listing
+        uses: andstor/directory-listing-action@v2
+
+      - name: Run Command
+        run: |
+          for folder in "${{ steps.dir-listing.outputs.directories }}"; do
+            cd "$folder"
+            # Replace the following command with your desired command
+            echo "Running command in $folder"
+            cd ..
+          done
