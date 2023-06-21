@@ -1,26 +1,31 @@
-name: Run Command in All Folders
 on:
   push:
     branches:
       - main
-
 jobs:
-  run-command:
+  find-jobs:
+    name: Find Jobs
     runs-on: ubuntu-latest
-
+    outputs:
+      folders: ${{ steps.jobs.outputs.folders }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v1
 
-      - name: Get Directory Listing
-        id: dir-listing
-        uses: andstor/directory-listing-action@v2
+      - id: jobs
+        uses: philips-labs/list-folders-action@v1
+        with:
+          path: .
 
-      - name: Run Command
-        run: |
-          for folder in "${{ steps.dir-listing.outputs.directories }}"; do
-            cd "$folder"
-            # Replace the following command with your desired command
-            echo "Running command in $folder"
-            cd ..
-          done
+  matrix:
+      name: Matrix Jobs
+      runs-on: ubuntu-latest
+      needs: [find-jobs]
+      defaults:
+        run:
+          working-directory: ${{ matrix.folder }}
+      strategy:
+        matrix:
+          folder: ${{ fromJson(needs.find-jobs.outputs.folders )}}
+      steps:
+          - name: do something
+            run: echo ${{ matrix.folder }}
