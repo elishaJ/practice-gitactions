@@ -5,36 +5,19 @@ on:
       - main # Replace with your branch name
 
 jobs:
-  build:
-    runs-on: ubuntu-latest  # windows-latest | macos-latest
-    name: Test changed-files
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # OR "2" -> To retrieve the preceding commit.
-
-      # Example 1
-      - name: Get changed files
-        id: changed-files
-        uses: tj-actions/changed-files@v36
-        
-        # To compare changes between the current commit and the last pushed remote commit set `since_last_remote_commit: true`. e.g
-        # with:
-        #   since_last_remote_commit: true 
-
-      - name: List all changed files
-        run: |
-          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
-            echo "$file was changed"
-          done
-
   terraform-apply:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      
+
+      - name: Determine Changed Folder
+        id: determine-changed-folder
+        run: |
+          CHANGED_FOLDER=$(git diff --name-only HEAD^ HEAD | awk -F'/' '{ print $1 }' | uniq)
+          echo "::set-output name=changed-folder::$CHANGED_FOLDER"
+
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v1
         with:
@@ -49,8 +32,10 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
-        working-directory: ./terraform-aws-ec2-instance # Specify your desired working directory
+        working-directory: ${{ steps.determine-changed-folder.outputs.changed-folder }}
 
       - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && github.event.pull_request == null && success()
         run: terraform apply -auto-approve
-        working-directory: ./terraform-aws-ec2-instance # Specify your desired working directory 
+        working-directory: ${{ steps.determine-changed-folder.outputs.changed-folder }}
+
