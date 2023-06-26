@@ -1,31 +1,31 @@
+name: Terraform apply on changed folder
 on:
   push:
     branches:
       - main
+
 jobs:
-  detect-directory-changes:
-    name: "Detect Directory Changes"
-    runs-on: ubuntu-latest
-    outputs:
-      changed: ${{ steps.detect.outputs.changed }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Detect Directory Changes
-        id: detect
-        uses: tchupp/actions-detect-directory-changes@v0.1.8
-
-  build:
-    name: "Build sub-projects"
+  terraform-apply:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        project: ${{ fromJSON(needs.detect-directory-changes.outputs.changed) }}
+        folder: [terraform-aws-ec2-instance, terraform-aws-s3-bucket]
+
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Build ${{ matrix.project }}
-        working-directory: ./${{ matrix.project }}
-        run: echo ${{ matrix.folder }}
+      - name: Change directory to GH folder
+        run: | 
+          cd ./${{ matrix.folder }}
+      
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v37
+
+      - name: Terraform init
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: terraform init
+      - name: Terraform Apply
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: terraform apply -auto-approve
