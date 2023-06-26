@@ -18,7 +18,7 @@ jobs:
       
       - name: Change directory to GH folder
         run: | 
-          cd ${{ matrix.folder }}
+          cd ./${{ matrix.folder }}
 
       - name: Get changed files
         id: changed-files
@@ -29,22 +29,22 @@ jobs:
         #   since_last_remote_commit: true 
 
       - name: List changed files in specific folder
+        env: 
+          folder_modified: false
+
         run: |
           echo "Changed files in ${{ matrix.folder }}:"
-          folder_modified=false
           for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
             if [[ $file == *"${{ matrix.folder }}"* ]]; then
               echo "$file"
               folder_modified=true
+              echo "FOLDER MODIFIED = $folder_modified";
             fi
           done
-
-      - name: Set folder-modified variable
-        id: set-variable
-        run: echo "folder-modified=${{ env.folder_modified }}" >> $GITHUB_ENV
 
       - name: Terraform Init
         if: steps.changed-files.outputs.any_changed == 'true' && env.folder_modified == 'true'
         run: |
-          cd ${{ matrix.folder }}
+          cd ./${{ matrix.folder }}
           terraform init
+          ls
