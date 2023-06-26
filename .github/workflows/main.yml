@@ -18,18 +18,21 @@ jobs:
       
       - name: Change directory to GH folder
         run: | 
-            cd ${{ matrix.folder }}
+          cd ${{ matrix.folder }}
 
       - name: Get changed files
         id: changed-files
         uses: tj-actions/changed-files@v37
         
-        # To compare changes between the current commit and the last pushed remote commit set `since_last_remote_commit: true`. e.g
+        # To compare changes between the current commit and the last pushed remote commit, set `since_last_remote_commit: true`. e.g
         # with:
         #   since_last_remote_commit: true 
 
-      - name: List all changed files
+      - name: List changed files in specific folder
         run: |
+          echo "Changed files in ${{ matrix.folder }}:"
           for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
-            echo "$file was changed"
+            if [[ $file == *"${{ matrix.folder }}"* ]]; then
+              echo "$file"
+            fi
           done
