@@ -1,4 +1,4 @@
-name: Terraform apply on changed folder
+name: Terraform apply on edited folder
 on:
   push:
     branches:
@@ -31,8 +31,20 @@ jobs:
       - name: List changed files in specific folder
         run: |
           echo "Changed files in ${{ matrix.folder }}:"
+          folder_modified=false
           for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
             if [[ $file == *"${{ matrix.folder }}"* ]]; then
               echo "$file"
+              folder_modified=true
             fi
           done
+
+      - name: Set folder-modified variable
+        id: set-variable
+        run: echo "folder-modified=${{ env.folder_modified }}" >> $GITHUB_ENV
+
+      - name: Terraform Init
+        if: steps.changed-files.outputs.any_changed == 'true' && env.folder_modified == 'true'
+        run: |
+          cd ${{ matrix.folder }}
+          terraform init
