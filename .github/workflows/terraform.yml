@@ -17,18 +17,21 @@ jobs:
 
       - name: Change directory to GH folder
         run: | 
-          cd ./${{ matrix.folder }}
+          cd ${{ matrix.folder }}
       
       - name: Get changed files
         id: changed-files
         uses: tj-actions/changed-files@v37
 
-      - name: Terraform init
+      - name: Print changed files
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
-          echo "One or more files in the docs folder has changed."
-          echo "List all the files that have changed: ${{ steps.changed-files.outputs.all_changed_files }}"
-	  terraform init	
+          echo "Changed files in ${{ matrix.folder }}:"
+          echo "${{ steps.changed-files.outputs.changed }}"
+
+      - name: Terraform init
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: terraform init	
 
       - name: Terraform Apply
         if: steps.changed-files.outputs.any_changed == 'true'
