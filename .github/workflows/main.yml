@@ -54,9 +54,4 @@ jobs:
         run: |
           cd ./${{ matrix.folder }}
           terraform init
-      
-      - name: Terraform Apply
-        if: env.folder_modified == 'true'
-        run: |
-          cd ./${{ matrix.folder }}
-          terraform apply -auto-approve
+          echo "Running terraform init"
